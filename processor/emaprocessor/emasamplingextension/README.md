@@ -5,25 +5,16 @@ This extension implements `samplingpolicy.Extension` for use with the
 It exposes an `Evaluate` method that uses the `dynsampler-go` `EMASampleRate`
 algorithm to make per-trace sampling decisions keyed on configurable attributes.
 
-## Shared Sampler Semantics
+## Per-Evaluator Isolated Samplers
 
-**Each extension instance maintains its own EMA rate table.** All evaluators
-created from the same extension instance share that single rate table — this is
-intentional, so that the EMA algorithm sees the aggregate traffic across all
-policies using the same extension and converges correctly.
+Each call to `NewEvaluator` creates an independent EMA sampler with its own
+rate table, so multiple tail_sampling policies can reference the same extension
+instance without sharing state. Each policy's traffic is tracked and adapted
+independently.
 
-If you need separate rate tracking for different policies (e.g., different
-goal sample rates per service tier), configure separate extension instances:
-
-```yaml
-extensions:
-  ema_sampling_policy/tier1:
-    goal_sample_rate: 5
-    sampling_attributes: [service.name]
-  ema_sampling_policy/tier2:
-    goal_sample_rate: 50
-    sampling_attributes: [service.name]
-```
+If you want multiple policies to share the same rate table (so the EMA sees
+aggregate traffic), configure them to use the same extension instance and call
+`NewEvaluator` once — or implement that aggregation outside of this extension.
 
 ## Configuration
 

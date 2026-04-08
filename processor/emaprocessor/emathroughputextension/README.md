@@ -6,25 +6,12 @@ It exposes an `Evaluate` method that uses the `dynsampler-go` `EMAThroughput`
 algorithm to make per-trace sampling decisions keyed on configurable attributes,
 targeting a configurable traces-per-second throughput.
 
-## Shared Sampler Semantics
+## Per-Evaluator Isolated Samplers
 
-**Each extension instance maintains its own EMA rate table.** All evaluators
-created from the same extension instance share that single rate table — this is
-intentional, so that the EMA algorithm sees the aggregate traffic across all
-policies using the same extension and converges correctly.
-
-If you need separate rate tracking for different policies (e.g., different
-throughput budgets per service tier), configure separate extension instances:
-
-```yaml
-extensions:
-  ema_throughput_policy/tier1:
-    goal_throughput_per_sec: 50
-    sampling_attributes: [service.name]
-  ema_throughput_policy/tier2:
-    goal_throughput_per_sec: 500
-    sampling_attributes: [service.name]
-```
+Each call to `NewEvaluator` creates an independent EMA sampler with its own
+rate table, so multiple tail_sampling policies can reference the same extension
+instance without sharing state. Each policy's traffic is tracked and adapted
+independently toward the same throughput goal.
 
 ## Configuration
 

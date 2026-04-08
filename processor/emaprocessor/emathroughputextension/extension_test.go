@@ -83,3 +83,66 @@ func TestExtension_NewEvaluator(t *testing.T) {
 	require.NotNil(t, evaluator)
 	assert.True(t, evaluator.IsStateful())
 }
+
+// TestEvaluatorsAreIsolated verifies that each NewEvaluator call produces an
+// evaluator backed by its own independent dynsampler instance.
+func TestEvaluatorsAreIsolated(t *testing.T) {
+	cfg := &Config{
+		AdjustmentInterval:   15 * time.Second,
+		Weight:               0.5,
+		AgeOutValue:          0.5,
+		BurstMultiple:        2.0,
+		BurstDetectionDelay:  3,
+		MaxKeys:              500,
+		GoalThroughputPerSec: 100,
+		InitialSampleRate:    10,
+		SamplingAttributes:   []string{"service.name"},
+	}
+
+	ext := newEmaThroughputExtension(cfg, componenttest.NewNopTelemetrySettings().Logger)
+	require.NoError(t, ext.Start(context.Background(), componenttest.NewNopHost()))
+	defer ext.Shutdown(context.Background()) //nolint:errcheck
+
+	eval1, err := ext.NewEvaluator("policy-a", nil)
+	require.NoError(t, err)
+
+	eval2, err := ext.NewEvaluator("policy-b", nil)
+	require.NoError(t, err)
+
+	// Two evaluators are distinct objects.
+	assert.NotSame(t, eval1, eval2)
+
+	// The extension is tracking two independent samplers.
+	ext.mu.Lock()
+	n := len(ext.samplers)
+	same := ext.samplers[0] == ext.samplers[1]
+	ext.mu.Unlock()
+	assert.Equal(t, 2, n)
+	assert.False(t, same, "each evaluator must own a distinct dynsampler instance")
+}
+
+// TestShutdown_StopsAllEvaluatorSamplers verifies Shutdown cleans up all
+// dynamically-started samplers without error.
+func TestShutdown_StopsAllEvaluatorSamplers(t *testing.T) {
+	cfg := &Config{
+		AdjustmentInterval:   15 * time.Second,
+		Weight:               0.5,
+		AgeOutValue:          0.5,
+		BurstMultiple:        2.0,
+		BurstDetectionDelay:  3,
+		MaxKeys:              500,
+		GoalThroughputPerSec: 100,
+		InitialSampleRate:    10,
+		SamplingAttributes:   []string{"service.name"},
+	}
+
+	ext := newEmaThroughputExtension(cfg, componenttest.NewNopTelemetrySettings().Logger)
+	require.NoError(t, ext.Start(context.Background(), componenttest.NewNopHost()))
+
+	_, err := ext.NewEvaluator("p1", nil)
+	require.NoError(t, err)
+	_, err = ext.NewEvaluator("p2", nil)
+	require.NoError(t, err)
+
+	require.NoError(t, ext.Shutdown(context.Background()))
+}
