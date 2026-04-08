@@ -1,0 +1,120 @@
+name: ema-collector-docker
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "processor/emasamplingprocessor/**"
+      - "cmd/ema-collector/**"
+      - ".github/workflows/ema-collector-docker.yml"
+      - ".github/actions/setup-go-tools/**"
+      - ".github/workflows/scripts/**"
+      - "internal/buildscripts/ocb-add-replaces.sh"
+      - "internal/tools/**"
+      - "go.mod"
+      - "go.sum"
+  pull_request:
+    paths:
+      - "processor/emasamplingprocessor/**"
+      - "cmd/ema-collector/**"
+      - ".github/workflows/ema-collector-docker.yml"
+      - ".github/actions/setup-go-tools/**"
+      - ".github/workflows/scripts/**"
+      - "internal/buildscripts/ocb-add-replaces.sh"
+      - "internal/tools/**"
+      - "go.mod"
+      - "go.sum"
+
+env:
+  SEGMENT_DOWNLOAD_TIMEOUT_MINS: 2
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+permissions: read-all
+
+jobs:
+  build-test:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - uses: ./.github/actions/setup-go-tools
+        with:
+          go-version: "1.25"
+
+      - name: Add local replace directives to builder config
+        run: bash ./internal/buildscripts/ocb-add-replaces.sh ema-collector
+
+      - name: Generate collector source files
+        run: |
+          GOOS= GOARCH= go tool -modfile=internal/tools/go.mod go.opentelemetry.io/collector/cmd/builder \
+            --skip-compilation \
+            --config cmd/ema-collector/builder-config-replaced.yaml
+
+      - name: Test processor
+        run: cd processor/emasamplingprocessor && go test ./...
+
+      - name: Test generated collector
+        run: cd cmd/ema-collector && go test ./...
+
+      - name: Build binaries
+        run: |
+          cd ./cmd/ema-collector
+          GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -o ../../bin/ema-collector_linux_amd64 .
+          GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -trimpath -o ../../bin/ema-collector_linux_arm64 .
+
+      - name: Smoke test binary
+        run: ./bin/ema-collector_linux_amd64 components
+
+      - name: Upload binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: ema-collector-binaries
+          path: bin/ema-collector_linux_*
+          retention-days: 1
+
+  docker-publish:
+    needs: build-test
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - name: Download binaries
+        uses: actions/download-artifact@v4
+        with:
+          name: ema-collector-binaries
+          path: bin/
+
+      - name: Copy binaries to Docker build context
+        run: |
+          chmod +x bin/ema-collector_linux_*
+          cp bin/ema-collector_linux_* cmd/ema-collector/
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@ce360397dd3f832beb865e1373c09c0e9f86d70a # v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4
+
+      - name: Login to Docker Hub
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push to Docker Hub
+        uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7
+        with:
+          context: cmd/ema-collector
+          push: ${{ github.ref == 'refs/heads/main' && github.event_name == 'push' }}
+          tags: |
+            stebet/otelcol-ema-sampling:latest
+            stebet/otelcol-ema-sampling:sha-${{ github.sha }}
+          platforms: linux/amd64,linux/arm64

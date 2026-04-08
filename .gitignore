@@ -37,6 +37,10 @@ dist/
 *.DS_Store
 __debug_bin*
 
+# act local workflow testing
+.actrc
+.secrets
+
 # Coverage
 coverage/*
 *-coverage.txt

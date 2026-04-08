@@ -1,0 +1,5 @@
+*
+!builder-config.yaml
+!Dockerfile
+!metadata.yaml
+!.gitignore

@@ -1,0 +1,6 @@
+type: ema_collector
+
+status:
+  class: cmd
+  codeowners:
+    active: []
