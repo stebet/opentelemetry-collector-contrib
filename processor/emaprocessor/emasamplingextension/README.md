@@ -29,3 +29,37 @@ aggregate traffic), configure them to use the same extension instance and call
 | `sampling_attributes` | []string | required | Attributes used to build per-key sampling decisions. |
 | `max_keys` | int | 500 | Maximum distinct keys tracked. |
 | `use_trace_length` | bool | false | Include span count in the sampling key. |
+
+## Example usage with tail_sampling
+
+```yaml
+extensions:
+  ema_sampling_policy:
+    goal_sample_rate: 10        # keep roughly 1-in-10 traces globally
+    sampling_attributes:
+      - service.name
+    adjustment_interval: 15s
+    weight: 0.5
+    age_out_value: 0.5
+
+processors:
+  tail_sampling:
+    decision_wait: 10s
+    num_traces: 100000
+    policies:
+      - name: ema-rate-policy
+        type: ema_sampling_policy   # must match the extension component ID above
+
+service:
+  extensions: [ema_sampling_policy]
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [tail_sampling]
+      exporters: [otlp]
+```
+
+> **Tip:** To sample errors at full rate alongside EMA sampling, add a separate
+> `status_code: ERROR` policy and combine them with the `and` composite policy.
+> There is no need for a built-in "always sample errors" option — the
+> `tailsamplingprocessor` handles this natively.

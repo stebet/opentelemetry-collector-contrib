@@ -27,3 +27,37 @@ independently toward the same throughput goal.
 | `sampling_attributes` | []string | required | Attributes used to build per-key sampling decisions. |
 | `max_keys` | int | 500 | Maximum distinct keys tracked. |
 | `use_trace_length` | bool | false | Include span count in the sampling key. |
+
+## Example usage with tail_sampling
+
+```yaml
+extensions:
+  ema_throughput_policy:
+    goal_throughput_per_sec: 500  # forward up to 500 traces/sec
+    initial_sample_rate: 10       # sample rate before EMA converges
+    sampling_attributes:
+      - service.name
+    adjustment_interval: 15s
+    weight: 0.5
+    age_out_value: 0.5
+
+processors:
+  tail_sampling:
+    decision_wait: 10s
+    num_traces: 100000
+    policies:
+      - name: ema-throughput-policy
+        type: ema_throughput_policy   # must match the extension component ID above
+
+service:
+  extensions: [ema_throughput_policy]
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [tail_sampling]
+      exporters: [otlp]
+```
+
+> **Tip:** To sample errors at full rate alongside EMA throughput control, add a
+> separate `status_code: ERROR` policy and combine them with the `and` composite
+> policy. The `tailsamplingprocessor` handles this natively.
