@@ -27,8 +27,7 @@ independently toward the same throughput goal.
 | `sampling_attributes` | []string | required | Attributes used to build per-key sampling decisions. |
 | `max_keys` | int | 500 | Maximum distinct keys tracked. |
 | `use_trace_length` | bool | false | Include span count in the sampling key. |
-
-## Example usage with tail_sampling
+| `add_sample_rate_attribute` | bool | true | Stamp `sampling.sample_rate` on every kept span. |
 
 ```yaml
 extensions:

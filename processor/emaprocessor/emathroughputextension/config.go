@@ -20,6 +20,8 @@ type Config struct {
 	UseTraceLength      bool          `mapstructure:"use_trace_length"`
 	GoalThroughputPerSec int          `mapstructure:"goal_throughput_per_sec"`
 	InitialSampleRate   int           `mapstructure:"initial_sample_rate"`
+	// AddSampleRateAttribute stamps sampling.sample_rate on every kept span.
+	AddSampleRateAttribute bool `mapstructure:"add_sample_rate_attribute"`
 }
 
 // Validate checks the Config for invalid values.

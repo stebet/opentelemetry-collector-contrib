@@ -283,6 +283,12 @@ func findAttributeValue(traces ptrace.Traces, attr string) string {
 	return ""
 }
 
+// AddSampleRateAttr stamps the sampling.sample_rate attribute on every span in traces.
+// Exported for use by extension evaluators.
+func AddSampleRateAttr(traces ptrace.Traces, rate int) {
+	addSampleRateAttr(traces, rate)
+}
+
 func addSampleRateAttr(traces ptrace.Traces, rate int) {
 	rs := traces.ResourceSpans()
 	for i := 0; i < rs.Len(); i++ {

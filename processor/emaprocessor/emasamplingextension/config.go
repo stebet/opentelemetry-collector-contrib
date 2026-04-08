@@ -19,6 +19,8 @@ type Config struct {
 	MaxKeys             int           `mapstructure:"max_keys"`
 	UseTraceLength      bool          `mapstructure:"use_trace_length"`
 	GoalSampleRate      int           `mapstructure:"goal_sample_rate"`
+	// AddSampleRateAttribute stamps sampling.sample_rate on every kept span.
+	AddSampleRateAttribute bool `mapstructure:"add_sample_rate_attribute"`
 }
 
 // Validate checks the Config for invalid values.

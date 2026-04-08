@@ -70,8 +70,9 @@ func (e *emaSamplingExtension) NewEvaluator(policyName string, _ map[string]any)
 	e.mu.Unlock()
 
 	return &emaSamplingEvaluator{
-		sampler:  sampler,
-		attrs:    e.cfg.SamplingAttributes,
-		traceLen: e.cfg.UseTraceLength,
+		sampler:             sampler,
+		attrs:               e.cfg.SamplingAttributes,
+		traceLen:            e.cfg.UseTraceLength,
+		addSampleRateAttr:   e.cfg.AddSampleRateAttribute,
 	}, nil
 }

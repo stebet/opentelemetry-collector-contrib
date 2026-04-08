@@ -71,8 +71,9 @@ func (e *emaThroughputExtension) NewEvaluator(policyName string, _ map[string]an
 	e.mu.Unlock()
 
 	return &emaThroughputEvaluator{
-		sampler:  sampler,
-		attrs:    e.cfg.SamplingAttributes,
-		traceLen: e.cfg.UseTraceLength,
+		sampler:           sampler,
+		attrs:             e.cfg.SamplingAttributes,
+		traceLen:          e.cfg.UseTraceLength,
+		addSampleRateAttr: e.cfg.AddSampleRateAttribute,
 	}, nil
 }

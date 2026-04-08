@@ -26,13 +26,14 @@ func NewFactory() extension.Factory {
 
 func createDefaultConfig() component.Config {
 	return &Config{
-		AdjustmentInterval:  15 * time.Second,
-		Weight:              0.5,
-		AgeOutValue:         0.5,
-		BurstMultiple:       2.0,
-		BurstDetectionDelay: 3,
-		MaxKeys:             500,
-		GoalSampleRate:      10,
+		AdjustmentInterval:     15 * time.Second,
+		Weight:                 0.5,
+		AgeOutValue:            0.5,
+		BurstMultiple:          2.0,
+		BurstDetectionDelay:    3,
+		MaxKeys:                500,
+		GoalSampleRate:         10,
+		AddSampleRateAttribute: true,
 	}
 }
 

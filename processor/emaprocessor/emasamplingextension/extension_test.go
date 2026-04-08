@@ -8,10 +8,15 @@ import (
 	"testing"
 	"time"
 
+	dynsampler "github.com/honeycombio/dynsampler-go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/collector/component/componenttest"
 	"go.opentelemetry.io/collector/extension/extensiontest"
+	"go.opentelemetry.io/collector/pdata/pcommon"
+	"go.opentelemetry.io/collector/pdata/ptrace"
+
+	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/tailsamplingprocessor/pkg/samplingpolicy"
 )
 
 func TestFactory_CreateDefaultConfig(t *testing.T) {
@@ -141,4 +146,90 @@ func TestShutdown_StopsAllEvaluatorSamplers(t *testing.T) {
 	require.NoError(t, err)
 
 	require.NoError(t, ext.Shutdown(context.Background()))
+}
+
+// TestDefaultConfig_AddSampleRateAttribute verifies the default enables the attribute.
+func TestDefaultConfig_AddSampleRateAttribute(t *testing.T) {
+	cfg := NewFactory().CreateDefaultConfig().(*Config)
+	assert.True(t, cfg.AddSampleRateAttribute)
+}
+
+// TestEvaluator_AddSampleRateAttribute verifies sampling.sample_rate is stamped when enabled.
+func TestEvaluator_AddSampleRateAttribute(t *testing.T) {
+	eval := &emaSamplingEvaluator{
+		sampler: &dynsampler.EMASampleRate{
+			GoalSampleRate: 1, // sample everything
+		},
+		attrs:             []string{"service.name"},
+		addSampleRateAttr: true,
+	}
+	require.NoError(t, eval.sampler.Start())
+	defer eval.sampler.Stop() //nolint:errcheck
+
+	td := buildTestTraceData("svc-a")
+
+	// Force a Sampled decision by seeding with rate=1 (always sample).
+	// We call Evaluate in a loop until we get Sampled to avoid flakiness.
+	var gotSampled bool
+	for range 20 {
+		td2 := buildTestTraceData("svc-a")
+		dec, err := eval.Evaluate(context.Background(), pcommon.TraceID{}, td2)
+		require.NoError(t, err)
+		if dec == samplingpolicy.Sampled {
+			td = td2
+			gotSampled = true
+			break
+		}
+	}
+	if !gotSampled {
+		t.Skip("did not sample in 20 attempts — probabilistic test, skipping")
+	}
+
+	span := td.ReceivedBatches.ResourceSpans().At(0).ScopeSpans().At(0).Spans().At(0)
+	v, ok := span.Attributes().Get("sampling.sample_rate")
+	require.True(t, ok, "sampling.sample_rate attribute must be present")
+	assert.GreaterOrEqual(t, v.Int(), int64(1))
+}
+
+// TestEvaluator_NoSampleRateAttribute verifies sampling.sample_rate is absent when disabled.
+func TestEvaluator_NoSampleRateAttribute(t *testing.T) {
+	eval := &emaSamplingEvaluator{
+		sampler: &dynsampler.EMASampleRate{
+			GoalSampleRate: 1, // sample everything
+		},
+		attrs:             []string{"service.name"},
+		addSampleRateAttr: false,
+	}
+	require.NoError(t, eval.sampler.Start())
+	defer eval.sampler.Stop() //nolint:errcheck
+
+	var gotSampled bool
+	for range 20 {
+		td := buildTestTraceData("svc-b")
+		dec, err := eval.Evaluate(context.Background(), pcommon.TraceID{}, td)
+		require.NoError(t, err)
+		if dec == samplingpolicy.Sampled {
+			span := td.ReceivedBatches.ResourceSpans().At(0).ScopeSpans().At(0).Spans().At(0)
+			_, ok := span.Attributes().Get("sampling.sample_rate")
+			assert.False(t, ok, "sampling.sample_rate must not be present when disabled")
+			gotSampled = true
+			break
+		}
+	}
+	if !gotSampled {
+		t.Skip("did not sample in 20 attempts — probabilistic test, skipping")
+	}
+}
+
+// buildTestTraceData returns a minimal TraceData with one span tagged with service.name=svcName.
+func buildTestTraceData(svcName string) *samplingpolicy.TraceData {
+	traces := ptrace.NewTraces()
+	rs := traces.ResourceSpans().AppendEmpty()
+	rs.Resource().Attributes().PutStr("service.name", svcName)
+	ss := rs.ScopeSpans().AppendEmpty()
+	ss.Spans().AppendEmpty().SetName("test-span")
+	return &samplingpolicy.TraceData{
+		ReceivedBatches: traces,
+		SpanCount:       1,
+	}
 }

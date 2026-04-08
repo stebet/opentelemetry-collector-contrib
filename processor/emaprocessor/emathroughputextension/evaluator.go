@@ -16,9 +16,10 @@ import (
 
 // emaThroughputEvaluator implements samplingpolicy.Evaluator using EMAThroughput.
 type emaThroughputEvaluator struct {
-	sampler  *dynsampler.EMAThroughput
-	attrs    []string
-	traceLen bool
+	sampler           *dynsampler.EMAThroughput
+	attrs             []string
+	traceLen          bool
+	addSampleRateAttr bool
 }
 
 var _ samplingpolicy.Evaluator = (*emaThroughputEvaluator)(nil)
@@ -30,6 +31,9 @@ func (e *emaThroughputEvaluator) Evaluate(_ context.Context, _ pcommon.TraceID, 
 		rate = 1
 	}
 	if rand.Intn(rate) == 0 { //nolint:gosec
+		if e.addSampleRateAttr {
+			emacore.AddSampleRateAttr(trace.ReceivedBatches, rate)
+		}
 		return samplingpolicy.Sampled, nil
 	}
 	return samplingpolicy.NotSampled, nil

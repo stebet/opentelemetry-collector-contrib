@@ -16,9 +16,10 @@ import (
 
 // emaSamplingEvaluator implements samplingpolicy.Evaluator using EMASampleRate.
 type emaSamplingEvaluator struct {
-	sampler  *dynsampler.EMASampleRate
-	attrs    []string
-	traceLen bool
+	sampler           *dynsampler.EMASampleRate
+	attrs             []string
+	traceLen          bool
+	addSampleRateAttr bool
 }
 
 var _ samplingpolicy.Evaluator = (*emaSamplingEvaluator)(nil)
@@ -30,6 +31,9 @@ func (e *emaSamplingEvaluator) Evaluate(_ context.Context, _ pcommon.TraceID, tr
 		rate = 1
 	}
 	if rand.Intn(rate) == 0 { //nolint:gosec
+		if e.addSampleRateAttr {
+			emacore.AddSampleRateAttr(trace.ReceivedBatches, rate)
+		}
 		return samplingpolicy.Sampled, nil
 	}
 	return samplingpolicy.NotSampled, nil
