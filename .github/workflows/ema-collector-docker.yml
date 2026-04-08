@@ -4,15 +4,13 @@ on:
   push:
     branches: [main]
     paths:
-      - "processor/emasamplingprocessor/**"
-      - "processor/emathroughputprocessor/**"
+      - "processor/emaprocessor/**"
       - "cmd/ema-collector/**"
       - ".github/workflows/ema-collector-docker.yml"
       - "internal/buildscripts/ocb-add-replaces.sh"
   pull_request:
     paths:
-      - "processor/emasamplingprocessor/**"
-      - "processor/emathroughputprocessor/**"
+      - "processor/emaprocessor/**"
       - "cmd/ema-collector/**"
       - ".github/workflows/ema-collector-docker.yml"
       - "internal/buildscripts/ocb-add-replaces.sh"
@@ -35,15 +33,10 @@ jobs:
         with:
           go-version: "1.25"
           cache-dependency-path: |
-            processor/emasamplingprocessor/go.sum
-            processor/emathroughputprocessor/go.sum
+            processor/emaprocessor/go.sum
 
-      - name: Test EMA sampling processor
-        working-directory: processor/emasamplingprocessor
-        run: go test ./...
-
-      - name: Test EMA throughput processor
-        working-directory: processor/emathroughputprocessor
+      - name: Test EMA processor
+        working-directory: processor/emaprocessor
         run: go test ./...
 
   docker-publish:

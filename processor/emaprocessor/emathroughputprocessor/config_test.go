@@ -1,7 +1,7 @@
 // Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
-package emasamplingprocessor
+package emathroughputprocessor
 
 import (
 	"testing"
@@ -9,20 +9,25 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/open-telemetry/opentelemetry-collector-contrib/processor/emaprocessor/internal/emacore"
 )
 
 func TestConfigValidate(t *testing.T) {
 	valid := func() *Config {
 		return &Config{
-			GoalSampleRate:     10,
-			AdjustmentInterval: 15 * time.Second,
-			Weight:             0.5,
-			AgeOutValue:        0.5,
-			BurstMultiple:      2.0,
-			SamplingAttributes: []string{"service.name"},
-			MaxKeys:            500,
-			DecisionWait:       30 * time.Second,
-			NumTraces:          50000,
+			GoalThroughputPerSec: 100,
+			InitialSampleRate:    10,
+			SharedConfig: emacore.SharedConfig{
+				AdjustmentInterval:  15 * time.Second,
+				Weight:              0.5,
+				AgeOutValue:         0.5,
+				BurstMultiple:       2.0,
+				SamplingAttributes:  []string{"service.name"},
+				MaxKeys:             500,
+				DecisionWait:        30 * time.Second,
+				NumTraces:           50000,
+			},
 		}
 	}
 
@@ -30,15 +35,15 @@ func TestConfigValidate(t *testing.T) {
 		require.NoError(t, valid().Validate())
 	})
 
-	t.Run("goal_sample_rate zero", func(t *testing.T) {
+	t.Run("goal_throughput_per_sec zero", func(t *testing.T) {
 		cfg := valid()
-		cfg.GoalSampleRate = 0
+		cfg.GoalThroughputPerSec = 0
 		assert.Error(t, cfg.Validate())
 	})
 
-	t.Run("goal_sample_rate negative", func(t *testing.T) {
+	t.Run("initial_sample_rate zero", func(t *testing.T) {
 		cfg := valid()
-		cfg.GoalSampleRate = -1
+		cfg.InitialSampleRate = 0
 		assert.Error(t, cfg.Validate())
 	})
 

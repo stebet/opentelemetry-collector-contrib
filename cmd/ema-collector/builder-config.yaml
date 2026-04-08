@@ -11,6 +11,10 @@ extensions:
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/extension/bearertokenauthextension v0.149.0
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/extension/basicauthextension v0.149.0
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/extension/azureauthextension v0.149.0
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/emaprocessor v0.149.0
+    import: github.com/open-telemetry/opentelemetry-collector-contrib/processor/emaprocessor/emasamplingextension
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/emaprocessor v0.149.0
+    import: github.com/open-telemetry/opentelemetry-collector-contrib/processor/emaprocessor/emathroughputextension
 
 receivers:
   - gomod: go.opentelemetry.io/collector/receiver/otlpreceiver v0.149.1-0.20260402195938-76ede073ee8e
@@ -19,8 +23,10 @@ receivers:
 processors:
   - gomod: go.opentelemetry.io/collector/processor/batchprocessor v0.149.1-0.20260402195938-76ede073ee8e
   - gomod: go.opentelemetry.io/collector/processor/memorylimiterprocessor v0.149.1-0.20260402195938-76ede073ee8e
-  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/emasamplingprocessor v0.149.0
-  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/emathroughputprocessor v0.149.0
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/emaprocessor v0.149.0
+    import: github.com/open-telemetry/opentelemetry-collector-contrib/processor/emaprocessor/emasamplingprocessor
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/emaprocessor v0.149.0
+    import: github.com/open-telemetry/opentelemetry-collector-contrib/processor/emaprocessor/emathroughputprocessor
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/tailsamplingprocessor v0.149.0
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/transformprocessor v0.149.0
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/filterprocessor v0.149.0
