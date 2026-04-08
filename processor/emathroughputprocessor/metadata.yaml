@@ -1,0 +1,52 @@
+display_name: EMA Throughput Tail Sampling Processor
+type: ema_throughput
+
+status:
+  class: processor
+  stability:
+    development: [traces]
+  distributions: [contrib]
+  codeowners:
+    active: []
+    seeking_new: true
+
+tests:
+  config:
+
+telemetry:
+  metrics:
+    processor_ema_throughput_traces_sampled:
+      enabled: true
+      description: Count of traces that were sampled
+      stability: development
+      unit: "{traces}"
+      sum:
+        value_type: int
+        monotonic: true
+
+    processor_ema_throughput_traces_not_sampled:
+      enabled: true
+      description: Count of traces that were not sampled
+      stability: development
+      unit: "{traces}"
+      sum:
+        value_type: int
+        monotonic: true
+
+    processor_ema_throughput_spans_sampled:
+      enabled: true
+      description: Count of spans that were sampled
+      stability: development
+      unit: "{spans}"
+      sum:
+        value_type: int
+        monotonic: true
+
+    processor_ema_throughput_spans_not_sampled:
+      enabled: true
+      description: Count of spans that were not sampled
+      stability: development
+      unit: "{spans}"
+      sum:
+        value_type: int
+        monotonic: true
