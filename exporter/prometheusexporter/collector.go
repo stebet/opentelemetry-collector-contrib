@@ -18,10 +18,9 @@ import (
 	prom "github.com/prometheus/prometheus/storage/remote/otlptranslator/prometheusremotewrite"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/pmetric"
-	conventions "go.opentelemetry.io/otel/semconv/v1.38.0"
+	conventions "go.opentelemetry.io/otel/semconv/v1.40.0"
 	"go.uber.org/multierr"
 	"go.uber.org/zap"
-	"google.golang.org/protobuf/proto"
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/exporter/prometheusexporter/internal/metadata"
 	prometheustranslator "github.com/open-telemetry/opentelemetry-collector-contrib/pkg/translator/prometheus"
@@ -94,9 +93,13 @@ func configureMetricNamer(config *Config) otlptranslator.MetricNamer {
 // configureLabelNamer configures the LabelNamer based on the translation strategy or legacy configuration
 func configureLabelNamer(config *Config) otlptranslator.LabelNamer {
 	_, utf8Allowed := getTranslationConfiguration(config)
+	permissiveSanitization := prometheustranslator.DropSanitizationGate.IsEnabled()
 	return otlptranslator.LabelNamer{
-		UTF8Allowed:                 utf8Allowed,
-		PreserveMultipleUnderscores: !prometheustranslator.DropSanitizationGate.IsEnabled(),
+		UTF8Allowed: utf8Allowed,
+		// TODO: SA1019: (github.com/prometheus/otlptranslator.LabelNamer).UnderscoreLabelSanitization is deprecated: This will be removed in a future version of otlptranslator.
+		// https://github.com/open-telemetry/opentelemetry-collector-contrib/issues/50429
+		UnderscoreLabelSanitization: !permissiveSanitization, //nolint:staticcheck
+		PreserveMultipleUnderscores: permissiveSanitization,
 	}
 }
 
@@ -317,6 +320,9 @@ func (c *collector) getMetricMetadata(metric pmetric.Metric, mType *dto.MetricTy
 
 	if !c.withoutScopeInfo {
 		for k, v := range scopeAttributes.All() {
+			if isReservedScopeAttribute(k) {
+				continue
+			}
 			labelName, err := c.labelNamer.Build("otel_scope_" + k)
 			if err != nil {
 				multiErrs = multierr.Append(multiErrs, err)
@@ -346,6 +352,15 @@ func (c *collector) getMetricMetadata(metric pmetric.Metric, mType *dto.MetricTy
 		return nil, nil, multiErrs
 	}
 	return prometheus.NewDesc(name, help, keys, c.constLabels), values, nil
+}
+
+func isReservedScopeAttribute(k string) bool {
+	switch k {
+	case "name", "version", "schema_url":
+		return true
+	default:
+		return false
+	}
 }
 
 func (c *collector) convertGauge(metric pmetric.Metric, resourceAttrs pcommon.Map, scopeName, scopeVersion, scopeSchemaURL string, scopeAttributes pcommon.Map) (prometheus.Metric, error) {
@@ -486,7 +501,7 @@ func (c *collector) convertDoubleHistogram(metric pmetric.Metric, resourceAttrs 
 	for _, bucket := range buckets {
 		index := indicesMap[bucket]
 		var countPerBucket uint64
-		if ip.ExplicitBounds().Len() > 0 && index < ip.ExplicitBounds().Len() {
+		if ip.ExplicitBounds().Len() > 0 && index < ip.ExplicitBounds().Len() && index < ip.BucketCounts().Len() {
 			countPerBucket = ip.BucketCounts().At(index)
 		}
 		cumCount += countPerBucket
@@ -648,8 +663,8 @@ func (c *collector) validateMetrics(name, description string, metricType *dto.Me
 		c.metricFamilies.Store(name, metricFamily{
 			lastSeen: now,
 			mf: &dto.MetricFamily{
-				Name: proto.String(name),
-				Help: proto.String(description),
+				Name: new(name),
+				Help: new(description),
 				Type: metricType,
 			},
 		})

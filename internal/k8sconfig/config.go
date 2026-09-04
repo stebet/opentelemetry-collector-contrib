@@ -50,6 +50,15 @@ const (
 	AuthTypeTLS AuthType = "tls"
 )
 
+const (
+	// DefaultKubeAPIQPS is the default number of queries per second to the Kubernetes API.
+	// Matches client-go's built-in default.
+	DefaultKubeAPIQPS float32 = 5
+	// DefaultKubeAPIBurst is the default burst limit for requests to the Kubernetes API.
+	// Matches client-go's built-in default.
+	DefaultKubeAPIBurst int = 10
+)
+
 var authTypes = map[AuthType]bool{
 	AuthTypeNone:           true,
 	AuthTypeServiceAccount: true,
@@ -67,12 +76,28 @@ type APIConfig struct {
 
 	// When using auth_type `kubeConfig`, override the current context.
 	Context string `mapstructure:"context"`
+
+	// KubeAPIQPS is the maximum number of queries per second to the Kubernetes API.
+	// Uses client-go's default (5) if unset. Increase if you see client-side throttling warnings.
+	KubeAPIQPS float32 `mapstructure:"kube_api_qps"`
+
+	// KubeAPIBurst is the maximum burst of requests to the Kubernetes API.
+	// Uses client-go's default (10) if unset. Increase if you see client-side throttling warnings.
+	KubeAPIBurst int `mapstructure:"kube_api_burst"`
 }
 
 // Validate validates the K8s API config
 func (c APIConfig) Validate() error {
 	if !authTypes[c.AuthType] {
 		return fmt.Errorf("invalid authType for kubernetes: %v", c.AuthType)
+	}
+
+	if c.KubeAPIQPS < 0 {
+		return errors.New("kube_api_qps must be greater than 0")
+	}
+
+	if c.KubeAPIBurst < 0 {
+		return errors.New("kube_api_burst must be greater than 0")
 	}
 
 	return nil
@@ -102,7 +127,8 @@ func CreateRestConfig(apiConf APIConfig) (*rest.Config, error) {
 			configOverrides.CurrentContext = apiConf.Context
 		}
 		authConf, err = clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
-			loadingRules, configOverrides).ClientConfig()
+			loadingRules, configOverrides,
+		).ClientConfig()
 		if err != nil {
 			return nil, fmt.Errorf("error connecting to k8s with auth_type=%s: %w", AuthTypeKubeConfig, err)
 		}
@@ -126,6 +152,13 @@ func CreateRestConfig(apiConf APIConfig) (*rest.Config, error) {
 			t.Proxy = nil
 		}
 		return rt
+	}
+
+	if apiConf.KubeAPIQPS > 0 {
+		authConf.QPS = apiConf.KubeAPIQPS
+	}
+	if apiConf.KubeAPIBurst > 0 {
+		authConf.Burst = apiConf.KubeAPIBurst
 	}
 
 	return authConf, nil
@@ -232,13 +265,17 @@ func MakeOpenShiftQuotaClient(apiConf APIConfig) (quotaclientset.Interface, erro
 func NewNodeSharedInformer(client k8s.Interface, nodeName string, watchSyncPeriod time.Duration) cache.SharedInformer {
 	informer := cache.NewSharedInformer(
 		&cache.ListWatch{
-			ListFunc: func(opts metav1.ListOptions) (runtime.Object, error) {
+			// TODO: SA1019: (k8s.io/client-go/tools/cache.ListWatch).ListFunc is deprecated: use ListWithContext instead.
+			// https://github.com/open-telemetry/opentelemetry-collector-contrib/issues/50424
+			ListFunc: func(opts metav1.ListOptions) (runtime.Object, error) { //nolint:staticcheck
 				if nodeName != "" {
 					opts.FieldSelector = fields.OneTermEqualSelector("metadata.name", nodeName).String()
 				}
 				return client.CoreV1().Nodes().List(context.Background(), opts)
 			},
-			WatchFunc: func(opts metav1.ListOptions) (watch.Interface, error) {
+			// TODO: SA1019: (k8s.io/client-go/tools/cache.ListWatch).WatchFunc is deprecated: use WatchWithContext instead.
+			// https://github.com/open-telemetry/opentelemetry-collector-contrib/issues/50424
+			WatchFunc: func(opts metav1.ListOptions) (watch.Interface, error) { //nolint:staticcheck
 				if nodeName != "" {
 					opts.FieldSelector = fields.OneTermEqualSelector("metadata.name", nodeName).String()
 				}

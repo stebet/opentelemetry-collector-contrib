@@ -8,6 +8,7 @@ import (
 
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl/contexts/ottldatapoint"
+	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl/contexts/ottlexemplar"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl/contexts/ottlmetric"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/ottl/ottlfuncs"
 )
@@ -26,12 +27,17 @@ func DataPointFunctions() map[string]ottl.Factory[*ottldatapoint.TransformContex
 	return functions
 }
 
+func ExemplarFunctions() map[string]ottl.Factory[*ottlexemplar.TransformContext] {
+	return ottlfuncs.StandardFuncs[*ottlexemplar.TransformContext]()
+}
+
 func MetricFunctions() map[string]ottl.Factory[*ottlmetric.TransformContext] {
 	functions := ottlfuncs.StandardFuncs[*ottlmetric.TransformContext]()
 
 	metricFunctions := ottl.CreateFactoryMap(
 		newExtractSumMetricFactory(),
 		newExtractCountMetricFactory(),
+		newExtractPercentileMetricFactory(),
 		newConvertGaugeToSumFactory(),
 		newConvertSumToGaugeFactory(),
 		newCopyMetricFactory(),

@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/messaging/azeventhubs/v2"
 	"github.com/Azure/azure-sdk-for-go/sdk/messaging/azeventhubs/v2/checkpoints"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob/container"
@@ -207,6 +206,7 @@ func (h *hubWrapperAzeventhubImpl) Receive(ctx context.Context, partitionID stri
 		)
 		pc, err := h.hub.NewPartitionClient(partitionID, &azeventhubs.PartitionClientOptions{
 			StartPosition: startPos,
+			Prefetch:      h.config.PrefetchCount,
 		})
 		if err != nil {
 			return nil, err
@@ -280,7 +280,7 @@ func (h *hubWrapperAzeventhubImpl) getStartPos(
 	consumerGroup string,
 	partitionID string,
 ) azeventhubs.StartPosition {
-	startPos := azeventhubs.StartPosition{Latest: to.Ptr(true)}
+	startPos := azeventhubs.StartPosition{Latest: new(true)}
 	if applyOffset && h.config.Offset != "" {
 		startPos = azeventhubs.StartPosition{Offset: &h.config.Offset}
 	}
@@ -400,7 +400,9 @@ func createProcessor(config *Config, host component.Host, logger *zap.Logger) (*
 		return nil, nil, err
 	}
 
-	processor, err := azeventhubs.NewProcessor(consumerClient, checkpointStore, nil)
+	processor, err := azeventhubs.NewProcessor(consumerClient, checkpointStore, &azeventhubs.ProcessorOptions{
+		Prefetch: config.PrefetchCount,
+	})
 	if err != nil {
 		consumerClient.Close(context.Background())
 		return nil, nil, fmt.Errorf("failed to create processor: %w", err)
