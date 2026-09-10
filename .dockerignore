@@ -2,10 +2,7 @@
 .git/
 .github/
 
-# Exclude most component directories that are not part of the ema-collector build.
-# Only processor/emasamplingprocessor and cmd/ema-collector are needed.
-# internal/buildscripts is needed for ocb-add-replaces.sh.
-# Every go.mod in the repo is needed by ocb-add-replaces.sh to build replace directives.
+# Keep component sources and test fixtures: OCB resolves Contrib modules locally.
 
 # Docs and examples
 docs/
@@ -13,12 +10,11 @@ examples/
 testbed/
 reports/
 
-# Markdown and licence files (small, won't hurt but keep context clean)
-*.md
-NOTICE
-LICENSE
+# Keep documentation and license files, which components may embed at build time.
 
 # Local build outputs
 bin/
 dist/
 cmd/ema-collector/ema-collector
+cmd/ema-collector/ema-collector.exe
+cmd/ema-collector/builder-config-replaced.yaml

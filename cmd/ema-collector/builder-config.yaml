@@ -2,56 +2,55 @@ dist:
   module: github.com/open-telemetry/opentelemetry-collector-contrib/cmd/ema-collector
   name: ema-collector
   description: OpenTelemetry Collector with EMA Tail Sampling Processor.
-  version: 0.149.0-dev
+  version: 0.160.0-dev
   output_path: ./cmd/ema-collector
 
 extensions:
-  - gomod: go.opentelemetry.io/collector/extension/zpagesextension v0.149.1-0.20260402195938-76ede073ee8e
-  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/extension/healthcheckextension v0.149.0
-  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/extension/bearertokenauthextension v0.149.0
-  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/extension/basicauthextension v0.149.0
-  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/extension/azureauthextension v0.149.0
-  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/emaprocessor v0.149.0
+  - gomod: go.opentelemetry.io/collector/extension/zpagesextension v0.160.1-0.20260903163450-cc4b33fc673f
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/extension/healthcheckextension v0.160.0
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/extension/bearertokenauthextension v0.160.0
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/extension/basicauthextension v0.160.0
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/extension/azureauthextension v0.160.0
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/emaprocessor v0.160.0
     import: github.com/open-telemetry/opentelemetry-collector-contrib/processor/emaprocessor/emasamplingextension
-  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/emaprocessor v0.149.0
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/emaprocessor v0.160.0
     import: github.com/open-telemetry/opentelemetry-collector-contrib/processor/emaprocessor/emathroughputextension
 
 receivers:
-  - gomod: go.opentelemetry.io/collector/receiver/otlpreceiver v0.149.1-0.20260402195938-76ede073ee8e
-  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/azuremonitorreceiver v0.149.0
+  - gomod: go.opentelemetry.io/collector/receiver/otlpreceiver v0.160.1-0.20260903163450-cc4b33fc673f
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/receiver/azuremonitorreceiver v0.160.0
 
 processors:
-  - gomod: go.opentelemetry.io/collector/processor/batchprocessor v0.149.1-0.20260402195938-76ede073ee8e
-  - gomod: go.opentelemetry.io/collector/processor/memorylimiterprocessor v0.149.1-0.20260402195938-76ede073ee8e
-  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/emaprocessor v0.149.0
+  - gomod: go.opentelemetry.io/collector/processor/batchprocessor v0.160.1-0.20260903163450-cc4b33fc673f
+  - gomod: go.opentelemetry.io/collector/processor/memorylimiterprocessor v0.160.1-0.20260903163450-cc4b33fc673f
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/emaprocessor v0.160.0
     import: github.com/open-telemetry/opentelemetry-collector-contrib/processor/emaprocessor/emasamplingprocessor
-  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/emaprocessor v0.149.0
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/emaprocessor v0.160.0
     import: github.com/open-telemetry/opentelemetry-collector-contrib/processor/emaprocessor/emathroughputprocessor
-  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/tailsamplingprocessor v0.149.0
-  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/transformprocessor v0.149.0
-  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/filterprocessor v0.149.0
-  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/deltatocumulativeprocessor v0.149.0
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/tailsamplingprocessor v0.160.0
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/transformprocessor v0.160.0
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/filterprocessor v0.160.0
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/deltatocumulativeprocessor v0.160.0
 
 exporters:
-  - gomod: go.opentelemetry.io/collector/exporter/debugexporter v0.149.1-0.20260402195938-76ede073ee8e
-  - gomod: go.opentelemetry.io/collector/exporter/otlpexporter v0.149.1-0.20260402195938-76ede073ee8e
-  - gomod: go.opentelemetry.io/collector/exporter/otlphttpexporter v0.149.1-0.20260402195938-76ede073ee8e
-  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/exporter/azuremonitorexporter v0.149.0
-  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/exporter/prometheusremotewriteexporter v0.149.0
+  - gomod: go.opentelemetry.io/collector/exporter/debugexporter v0.160.1-0.20260903163450-cc4b33fc673f
+  - gomod: go.opentelemetry.io/collector/exporter/otlpexporter v0.160.1-0.20260903163450-cc4b33fc673f
+  - gomod: go.opentelemetry.io/collector/exporter/otlphttpexporter v0.160.1-0.20260903163450-cc4b33fc673f
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/exporter/azuremonitorexporter v0.160.0
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/exporter/prometheusremotewriteexporter v0.160.0
 
 connectors:
-  - gomod: go.opentelemetry.io/collector/connector/forwardconnector v0.149.1-0.20260402195938-76ede073ee8e
-  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/connector/grafanacloudconnector v0.149.0
-  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/connector/signaltometricsconnector v0.149.0
+  - gomod: go.opentelemetry.io/collector/connector/forwardconnector v0.160.1-0.20260903163450-cc4b33fc673f
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/connector/grafanacloudconnector v0.160.0
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/connector/signaltometricsconnector v0.160.0
 
 providers:
-  - gomod: go.opentelemetry.io/collector/confmap/provider/envprovider v1.55.1-0.20260402195938-76ede073ee8e
-  - gomod: go.opentelemetry.io/collector/confmap/provider/fileprovider v1.55.1-0.20260402195938-76ede073ee8e
-  - gomod: go.opentelemetry.io/collector/confmap/provider/httpprovider v1.55.1-0.20260402195938-76ede073ee8e
-  - gomod: go.opentelemetry.io/collector/confmap/provider/httpsprovider v1.55.1-0.20260402195938-76ede073ee8e
-  - gomod: go.opentelemetry.io/collector/confmap/provider/yamlprovider v1.55.1-0.20260402195938-76ede073ee8e
+  - gomod: go.opentelemetry.io/collector/confmap/provider/envprovider v1.66.1-0.20260903163450-cc4b33fc673f
+  - gomod: go.opentelemetry.io/collector/confmap/provider/fileprovider v1.66.1-0.20260903163450-cc4b33fc673f
+  - gomod: go.opentelemetry.io/collector/confmap/provider/httpprovider v1.66.1-0.20260903163450-cc4b33fc673f
+  - gomod: go.opentelemetry.io/collector/confmap/provider/httpsprovider v1.66.1-0.20260903163450-cc4b33fc673f
+  - gomod: go.opentelemetry.io/collector/confmap/provider/yamlprovider v1.66.1-0.20260903163450-cc4b33fc673f
 
-# When using `make genotelcontribcol`, the `replaces` content is appended to this
-# file before passing it to OCB, to ensure that local versions are used for all
-# Contrib modules.
+# The Dockerfile runs ocb-add-replaces.sh ema-collector to append local Contrib
+# replacements before passing this configuration to OCB.
 replaces:

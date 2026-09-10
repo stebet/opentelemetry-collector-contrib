@@ -3,3 +3,6 @@
 !Dockerfile
 !metadata.yaml
 !.gitignore
+!config.yaml
+!README.md
+!smoke-test.sh

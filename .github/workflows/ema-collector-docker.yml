@@ -1,6 +1,7 @@
 name: ema-collector-docker
 
 on:
+  workflow_dispatch:
   push:
     branches: [main]
     paths:
@@ -8,12 +9,18 @@ on:
       - "cmd/ema-collector/**"
       - ".github/workflows/ema-collector-docker.yml"
       - "internal/buildscripts/ocb-add-replaces.sh"
+      - ".dockerignore"
+      - "processor/tailsamplingprocessor/**"
+      - "cmd/otelcontribcol/builder-config.yaml"
   pull_request:
     paths:
       - "processor/emaprocessor/**"
       - "cmd/ema-collector/**"
       - ".github/workflows/ema-collector-docker.yml"
       - "internal/buildscripts/ocb-add-replaces.sh"
+      - ".dockerignore"
+      - "processor/tailsamplingprocessor/**"
+      - "cmd/otelcontribcol/builder-config.yaml"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
@@ -31,13 +38,13 @@ jobs:
 
       - uses: actions/setup-go@0aaccfd150d50ccaeb58ebd88d36e91967a5f35b # v5
         with:
-          go-version: "1.25"
+          go-version-file: processor/emaprocessor/go.mod
           cache-dependency-path: |
             processor/emaprocessor/go.sum
 
       - name: Test EMA processor
         working-directory: processor/emaprocessor
-        run: go test ./...
+        run: go test -race ./...
 
   docker-publish:
     needs: test
@@ -59,6 +66,20 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build smoke-test image
+        uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7
+        with:
+          context: .
+          file: cmd/ema-collector/Dockerfile
+          load: true
+          tags: otelcol-ema:smoke
+          platforms: linux/amd64
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Verify EMA image
+        run: bash cmd/ema-collector/smoke-test.sh otelcol-ema:smoke
 
       - name: Build and push to Docker Hub
         uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7

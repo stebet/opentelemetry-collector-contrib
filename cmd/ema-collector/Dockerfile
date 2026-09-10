@@ -7,14 +7,14 @@
 
 # ── build stage ──────────────────────────────────────────────────────────────
 # Run the builder on the host platform so we can cross-compile without QEMU.
-FROM --platform=$BUILDPLATFORM golang:1.25-alpine AS builder
+FROM --platform=$BUILDPLATFORM golang:1.26-alpine AS builder
 
 RUN apk add --no-cache git bash
 
 # Install the OTel Collector Builder (OCB) at the pinned version.
 # The module cache mount avoids re-downloading on every build.
 RUN --mount=type=cache,target=/root/go/pkg/mod \
-    go install go.opentelemetry.io/collector/cmd/builder@v0.149.1-0.20260402195938-76ede073ee8e
+    go install go.opentelemetry.io/collector/cmd/builder@v0.160.1-0.20260903163450-cc4b33fc673f
 
 WORKDIR /src
 
@@ -51,7 +51,9 @@ USER ${USER_UID}:${USER_GID}
 
 COPY --from=certs /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 COPY --from=builder /src/cmd/ema-collector/ema-collector /ema-collector
+COPY cmd/ema-collector/config.yaml /etc/otel/config.yaml
+COPY LICENSE NOTICE /usr/share/ema-collector/
 
-EXPOSE 4317 4318 55679 55680
+EXPOSE 4317 4318 13133
 ENTRYPOINT ["/ema-collector"]
 CMD ["--config", "/etc/otel/config.yaml"]
