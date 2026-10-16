@@ -14,7 +14,7 @@ RUN apk add --no-cache git bash
 # Install the OTel Collector Builder (OCB) at the pinned version.
 # The module cache mount avoids re-downloading on every build.
 RUN --mount=type=cache,target=/root/go/pkg/mod \
-    go install go.opentelemetry.io/collector/cmd/builder@v0.160.1-0.20260903163450-cc4b33fc673f
+    go install go.opentelemetry.io/collector/cmd/builder@v0.163.0
 
 WORKDIR /src
 
