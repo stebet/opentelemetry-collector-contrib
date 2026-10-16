@@ -1,8 +1,10 @@
 # EMA Collector
 
-Custom Collector distribution containing the `ema_sampling` and `ema_throughput`
-trace processors and the `ema_sampling_policy` and `ema_throughput_policy`
-extensions for `tail_sampling`. The complete component list is in
+Custom Collector distribution containing the `ema_sampling`, `ema_throughput`,
+and `adaptive_tail_sampling` trace processors, the `ema_sampling_policy` and
+`ema_throughput_policy` extensions for `tail_sampling`, and the optional
+`redis_fleet_tracker` extension for fleet-wide adaptive throughput budgets.
+The complete component list is in
 [builder-config.yaml](builder-config.yaml); this is a selected distribution,
 not the full Contrib binary.
 
@@ -10,8 +12,8 @@ not the full Contrib binary.
 
 Run from the repository root with Docker Desktop in Linux container mode or a
 Linux Docker engine. The build uses Go 1.26 and the Collector Builder pinned to
-the core revision used by this checkout. All Contrib modules, including EMA and
-tail sampling, are resolved from local source.
+the core revision used by this checkout. All Contrib modules, including EMA,
+adaptive tail sampling, and Redis fleet tracking, are resolved from local source.
 
 ```sh
 docker build -f cmd/ema-collector/Dockerfile -t otelcol-ema:local .
@@ -60,6 +62,15 @@ memory limiter and trace capacity for your workload and container memory limit.
 To compose sampling policies, use the [EMA policy extension](../../processor/emaprocessor/emasamplingextension/README.md)
 with `tail_sampling` instead of the standalone `ema_sampling` processor.
 
+To use adaptive sampling, configure
+[`adaptive_tail_sampling`](../../processor/adaptivetailsamplingprocessor/README.md)
+and replace `ema_sampling` in the traces pipeline's processors list. The bundled
+configuration remains EMA-based. Fleet-wide `adaptive_throughput` budgets can
+use the included
+[`redis_fleet_tracker`](../../extension/fleettracker/redisfleettrackerextension/README.md)
+extension. Redis or Valkey must be provided separately when that extension is
+enabled; adaptive sampling otherwise needs no Redis server.
+
 ## Verify
 
 ```sh
@@ -68,12 +79,15 @@ docker run --rm otelcol-ema:local validate --config=/etc/otel/config.yaml
 bash cmd/ema-collector/smoke-test.sh otelcol-ema:local
 ```
 
-The smoke test requires Bash, Docker and curl. It checks the four EMA factories,
-configuration, health endpoint, and export of an OTLP trace with the sample rate
-set to one. It removes its temporary container on exit. The Docker workflow runs
-EMA tests with the race detector and this smoke test before publishing.
+The smoke test requires Bash, Docker and curl. It checks the EMA, adaptive tail
+sampling, and Redis fleet tracker factories, validates the bundled and optional
+fleet configurations, and verifies OTLP trace export through both EMA and
+adaptive sampling. It removes its temporary containers on exit. The Docker
+workflow runs EMA, adaptive tail sampling, and Redis fleet tracker tests with
+the race detector and this smoke test before publishing.
 
 When merging upstream, update this manifest, the Dockerfile's builder version,
-and `processor/emaprocessor/go.mod` together to match the core/Contrib versions
-in `cmd/otelcontribcol/builder-config.yaml`, then run `go mod tidy` and the tests
-in `processor/emaprocessor`.
+and the Go modules for EMA, adaptive tail sampling, and Redis fleet tracking
+together to match the core/Contrib versions in
+`cmd/otelcontribcol/builder-config.yaml`, then run `go mod tidy` and the tests
+in those modules.

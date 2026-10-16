@@ -1,7 +1,8 @@
 # syntax=docker/dockerfile:1
 #
 # Multi-stage build for the custom OTel Collector distribution that includes
-# the EMA Tail Sampling Processor and the components used by HaveIBeenPwned.
+# the EMA and Adaptive Tail Sampling Processors and the components used by
+# HaveIBeenPwned.
 #
 # Requires BuildKit (enabled by default in Docker 23+ and docker/build-push-action).
 
@@ -29,8 +30,8 @@ RUN bash ./internal/buildscripts/ocb-add-replaces.sh ema-collector
 # Generate the collector Go module AND compile the binary.
 # The cache mounts keep the module download cache and the Go build cache
 # across rebuilds so only changed packages are recompiled.
-ARG TARGETOS=linux
-ARG TARGETARCH=amd64
+ARG TARGETOS
+ARG TARGETARCH
 # Use a per-arch build cache id so amd64 and arm64 builds don't share
 # compiled object files (they are not cross-architecture compatible).
 RUN --mount=type=cache,target=/root/go/pkg/mod \

@@ -1,7 +1,7 @@
 dist:
   module: github.com/open-telemetry/opentelemetry-collector-contrib/cmd/ema-collector
   name: ema-collector
-  description: OpenTelemetry Collector with EMA Tail Sampling Processor.
+  description: OpenTelemetry Collector with EMA and Adaptive Tail Sampling Processors.
   version: 0.163.0-dev
   output_path: ./cmd/ema-collector
 
@@ -11,6 +11,7 @@ extensions:
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/extension/bearertokenauthextension v0.163.0
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/extension/basicauthextension v0.163.0
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/extension/azureauthextension v0.163.0
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/extension/fleettracker/redisfleettrackerextension v0.163.0
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/emaprocessor v0.163.0
     import: github.com/open-telemetry/opentelemetry-collector-contrib/processor/emaprocessor/emasamplingextension
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/emaprocessor v0.163.0
@@ -23,6 +24,7 @@ receivers:
 processors:
   - gomod: go.opentelemetry.io/collector/processor/batchprocessor v0.163.0
   - gomod: go.opentelemetry.io/collector/processor/memorylimiterprocessor v0.163.0
+  - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/adaptivetailsamplingprocessor v0.163.0
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/emaprocessor v0.163.0
     import: github.com/open-telemetry/opentelemetry-collector-contrib/processor/emaprocessor/emasamplingprocessor
   - gomod: github.com/open-telemetry/opentelemetry-collector-contrib/processor/emaprocessor v0.163.0
